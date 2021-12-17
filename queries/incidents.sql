@@ -4,11 +4,12 @@ source,
 incident_id,
 MIN(IF(root.time_created < issue.time_created, root.time_created, issue.time_created)) as time_created,
 MAX(time_resolved) as time_resolved,
-ARRAY_AGG(root_cause IGNORE NULLS) changes,
+ARRAY_AGG(root_cause IGNORE NULLS ORDER BY issue.time_requested DESC LIMIT 1) changes,
 FROM
 (
 SELECT 
 source,
+time_created AS time_requested,
 CASE WHEN source LIKE "github%" THEN JSON_EXTRACT_SCALAR(metadata, '$.issue.number')
      WHEN source LIKE "gitlab%" AND event_type = "note" THEN JSON_EXTRACT_SCALAR(metadata, '$.object_attributes.noteable_id')
      WHEN source LIKE "gitlab%" AND event_type = "issue" THEN JSON_EXTRACT_SCALAR(metadata, '$.object_attributes.id') end as incident_id,
